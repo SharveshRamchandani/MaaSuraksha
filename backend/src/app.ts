@@ -33,7 +33,29 @@ const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
 // a different origin and loads API responses (e.g. report downloads) from it;
 // CORS below still decides which origins may read them.
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-app.use(cors({ origin: allowedOrigins }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      try {
+        const hostname = new URL(origin).hostname;
+        const isAllowed =
+          allowedOrigins.includes(origin) ||
+          hostname.endsWith('.vercel.app') ||
+          hostname === 'localhost' ||
+          hostname === '127.0.0.1';
+        if (isAllowed) {
+          callback(null, true);
+        } else {
+          callback(new Error(`Origin ${origin} not allowed by CORS`));
+        }
+      } catch {
+        callback(new Error('Invalid Origin header'));
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Root & direct /health endpoints to ensure Render/uptime health checks succeed
