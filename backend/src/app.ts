@@ -36,6 +36,12 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
+// Root & direct /health endpoints to ensure Render/uptime health checks succeed
+// regardless of whether the health check path is configured as /, /health, or /api/health.
+app.get(['/', '/health'], (_req, res) => {
+  res.status(200).json({ success: true, message: 'MaaSuraksha API is running' });
+});
+
 app.use('/api', routes);
 
 app.use(notFound);
